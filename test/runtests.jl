@@ -6,7 +6,5 @@ using Aqua
     @testset "Code quality (Aqua.jl)" begin
         Aqua.test_all(SomeStructuredMatrices, ambiguities=false)
     end
-    # Write your tests here.
+	include("implicit_product.jl")
 end
-
-include("implicit_product.jl")

@@ -94,7 +94,7 @@ function optimise(A :: ImplicitProduct; max_flops_per_mul=1000000000, min_stage_
 	# step 1: figure out optimal matrix multiplication sequence, assuming we multiply everything out
 	# https://en.wikipedia.org/wiki/Matrix_chain_multiplication
 	cost = fill(Inf64, (length(A.mats), length(A.mats))) # cost[i,j] is min flop cost of A.mats[i]*...*A.mats[j]
-	splitat = fill(Int64(0), (length(A.mats))) # splitat[i,j] = k means do (A.mats[i]*...*A.mats[k]) * (A.mats[k+1]*...*A.mats[j])
+	splitat = fill(Int64(0), (length(A.mats), length(A.mats))) # splitat[i,j] = k means do (A.mats[i]*...*A.mats[k]) * (A.mats[k+1]*...*A.mats[j])
 	for i=1:length(A.mats)
 		cost[i,i] = 0
 	end
@@ -112,50 +112,22 @@ function optimise(A :: ImplicitProduct; max_flops_per_mul=1000000000, min_stage_
 	end
 
 	# step 2: carry out the multiplications
-	whereright = BitVector(undef, length(A.mats))
-	whereright .= false
-	splits = Vector{Int64}(undef, length(A.mats))
-	splits[1] = splitat[1,end]
-	bounds = Vector{Tuple{Int64,Int64}}(undef, length(A.mats))
-	bounds[1] = (1, length(A.mats))
-	depth = 1
-	going_up = false
-	cur_mat = nothing
-	left_mats = Vector{LinearMap{eltype}}
 	do_mult(A, B) = (size(A,1) * size(A,2) * size(B,2) <= max_flops_per_mul &&
 			size(A,1)*size(B,2)^2 <= size(A,1)*size(A,2)^2 + size(A,2)*size(B,2)^2) ||
 			(size(A,1) <= min_stage_size && size(B,2) <= min_stage_size)
-	while true
-		if splits[depth] == bounds[depth][whereright[depth] ? 2 : 1] # at an end
-			cur_mat = A.mats[spltis[depth]]
-			depth -= 1
-			going_up = true
-		elseif depth == 0 # gone up to the top
-			return cur_mat
-		elseif going_up && whereright[depth]
-			if do_mult(left_mats[depth], cur_mat)
-				cur_mat = left_mats[depth] * cur_mat
+	function multiply_through(i, j)
+		if i == j
+			return A.mats[i]
+		else
+			my_split = splitat[i, j]
+			L = multiply_through(i, my_split)
+			R = multiply_through(my_split+1, j)
+			if do_mult(L, R)
+				return L*R
 			else
-				cur_mat = ImplicitProduct([left_mats, cur_mat])
+				return ImplicitProduct([L, R])
 			end
-			depth -= 1
-			going_up = true
-		elseif going_up # && !whereright[depth]
-			left_mats[depth] = cur_mat
-			depth += 1
-			whereright[depth] = true
-			going_up = false
-		else # going down, not at end
-			if whereright[depth]
-				splits[depth+1] = splitat[splits[depth], bounds[depth][2]]
-				bounds[depth+1] = (splits[depth], bounds[depth][2])
-			else
-				splits[depth+1] = splitat[bounds[depth][1], splits[depth]]
-				bounds[depth+1] = (bounds[depth][1], splits[depth])
-			end
-			depth += 1
-			whereright[depth] = false
-			going_up = false
 		end
 	end
+	return multiply_through(1, length(A.mats))
 end
