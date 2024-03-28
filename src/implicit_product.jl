@@ -9,6 +9,14 @@ approximations.
 struct ImplicitProduct
 	mats :: Vector
 	function ImplicitProduct(mats :: Vector)
+		if length(mats) < 1
+			throw(DomainError("Cannot make a matrix out of zero multiplications."))
+		end
+		for i=2:length(mats)
+			if size(mats[i-1],2) != size(mats[i],1)
+				throw(DimensionMismatch("Cannot implicitly multiply matrices of size " * string(size(mats[i-1])) * " and " * string(size(mats[i]))))
+			end
+		end
 		if all(A->typeof(A)!=ImplicitProduct, mats)
 			return new(mats)
 		else
@@ -29,7 +37,7 @@ end
 
 function Base.:*(A :: ImplicitProduct, x :: AbstractVector)
 	y = x
-	for i=1:length(A.mats)
+	for i=length(A.mats):-1:1
 		y = A.mats[i] * y
 	end
 	return y
@@ -54,6 +62,19 @@ function Base.eltype(A :: ImplicitProduct)
 		return Any
 	else
 		return Union{eltype.(A)...}
+	end
+end
+
+function Base.size(A :: ImplicitProduct)
+	return (size(A.mats[1],1), size(A.mats[end],2))
+end
+function Base.size(A :: ImplicitProduct, dim :: Int)
+	if dim == 1
+		return size(A.mats[1],1)
+	elseif dim == 2
+		return size(A.mats[end],2)
+	else
+		throw(BoundsError("Dimension " * string(dim) * " is not a dimension matrices have."))
 	end
 end
 

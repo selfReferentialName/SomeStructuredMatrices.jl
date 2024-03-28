@@ -3,6 +3,7 @@ module SomeStructuredMatrices
 # export LinearMap
 #export optimise!, optimize!
 export optimise, optimize
+export ImplicitProduct
 
 using LinearAlgebra
 

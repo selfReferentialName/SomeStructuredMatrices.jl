@@ -8,3 +8,5 @@ using Aqua
     end
     # Write your tests here.
 end
+
+include("implicit_product.jl")
