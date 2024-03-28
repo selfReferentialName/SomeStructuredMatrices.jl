@@ -1,3 +1,11 @@
+"""
+	ImplicitProduct
+
+Lazy matrix-matrix multiplication. Handles an arbitrary number of matrices
+multiplied together, allowing for matrix-vector multiplication by doing a
+sequence of multiplications with the contained vectors. Useful for low rank
+approximations.
+"""
 struct ImplicitProduct
 	mats :: Vector
 	function ImplicitProduct(mats :: Vector)
@@ -93,7 +101,8 @@ function optimise(A :: ImplicitProduct; max_flops_per_mul=1000000000, min_stage_
 	going_up = false
 	cur_mat = nothing
 	left_mats = Vector{LinearMap{eltype}}
-	do_mult(A, B) = (size(A,1) * size(A,2) * size(B,2) <= max_flops_per_mul) ||
+	do_mult(A, B) = (size(A,1) * size(A,2) * size(B,2) <= max_flops_per_mul &&
+			size(A,1)*size(B,2)^2 <= size(A,1)*size(A,2)^2 + size(A,2)*size(B,2)^2) ||
 			(size(A,1) <= min_stage_size && size(B,2) <= min_stage_size)
 	while true
 		if splits[depth] == bounds[depth][whereright[depth] ? 2 : 1] # at an end
