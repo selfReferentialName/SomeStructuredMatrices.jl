@@ -19,6 +19,20 @@ using LinearAlgebra
 
 include("implicit_product.jl")
 
+"""
+	optimise(A; kwargs...)
+
+Copy A. This is here to help make optimise(A) safe to call for all A.
+"""
+function optimise(A; kwargs...)
+	return copy(A)
+end
+
+"""
+	optimize(A; kwargs...)
+
+An alias for optimise.
+"""
 optimize = optimise
 
 end

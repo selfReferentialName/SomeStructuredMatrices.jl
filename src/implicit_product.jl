@@ -20,7 +20,7 @@ struct ImplicitProduct
 		if all(A->typeof(A)!=ImplicitProduct, mats)
 			return new(mats)
 		else
-			rmats = Vector{LinearMap{eltype(mats[1])}}(undef, 0)
+			rmats = Vector{Any}(undef, 0)
 			for i=1:length(mats)
 				if typeof(mats[i]) == ImplicitProduct
 					for mat in mats[i].mats
@@ -47,21 +47,29 @@ function Base.:*(A :: ImplicitProduct ...)
 	return ImplicitProduct(vcat(get_mats.(A)...))
 end
 function Base.:*(A :: ImplicitProduct, B...)
-	return ImplicitProduct(vcat(A.mats, B))
+	mats = Vector{Any}(undef, length(A.mats)+length(B))
+	mats[1:length(A.mats)] = A.mats
+	for i=1:length(B)
+		mats[length(A.mats)+i] = B[i]
+	end
+	return ImplicitProduct(mats)
 end
 function Base.:*(A, B :: ImplicitProduct)
 	return ImplicitProduct(vcat([A], B.mats))
 end
 
 function LinearAlgebra.transpose(A :: ImplicitProduct)
-	return ImplicitProduct(transpose.(A.mats))
+	return ImplicitProduct(reverse(transpose.(A.mats)))
+end
+function LinearAlgebra.adjoint(A :: ImplicitProduct)
+	return ImplicitProduct(reverse(adjoint.(A.mats)))
 end
 
 function Base.eltype(A :: ImplicitProduct)
 	if length(A.mats) == 0
 		return Any
 	else
-		return Union{eltype.(A)...}
+		return Union{eltype.(A.mats)...}
 	end
 end
 
