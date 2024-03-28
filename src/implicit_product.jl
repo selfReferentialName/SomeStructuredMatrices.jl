@@ -45,7 +45,7 @@ function Base.:*(A, B :: ImplicitProduct)
 	return ImplicitProduct(vcat([A], B.mats))
 end
 
-function LinearAlgebra.transpose(A)
+function LinearAlgebra.transpose(A :: ImplicitProduct)
 	return ImplicitProduct(transpose.(A.mats))
 end
 
