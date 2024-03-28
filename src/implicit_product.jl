@@ -66,11 +66,7 @@ function LinearAlgebra.adjoint(A :: ImplicitProduct)
 end
 
 function Base.eltype(A :: ImplicitProduct)
-	if length(A.mats) == 0
-		return Any
-	else
-		return Union{eltype.(A.mats)...}
-	end
+	return Union{eltype.(A.mats)...}
 end
 
 function Base.size(A :: ImplicitProduct)

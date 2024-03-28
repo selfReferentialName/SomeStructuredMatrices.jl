@@ -23,6 +23,15 @@
 	@test ABCo ≈ optimise(ABCc)
 	@test ABCo ≈ optimise(ABCm3)
 	@test eltype(ABCi) == Float64
+
+	nbig = Int(2e3)
+	rbig = Int(2e3)
+	Abig = rand(nbig, rbig)
+	Bbig = rand(rbig, nbig)
+	ABbig = ImplicitProduct([Abig, Bbig])
+	xbig = rand(nbig)
+	@test typeof(optimise(ABbig)) == ImplicitProduct
+	@test optimise(ABbig) * xbig ≈ ABbig * xbig
 end
 
 @testset "ImplicitProduct throws exceptions correctly" begin
