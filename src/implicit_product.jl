@@ -1,6 +1,6 @@
-struct ImplicitProduct{T} <: TransposeableLinearMap{T}
-	mats :: Vector{LinearMap{T}}
-	function ImplicitProduct(mats :: Vector{LinearMap})
+struct ImplicitProduct
+	mats :: Vector
+	function ImplicitProduct(mats :: Vector)
 		if all(A->typeof(A)!=ImplicitProduct, mats)
 			return new(mats)
 		else
@@ -19,30 +19,34 @@ struct ImplicitProduct{T} <: TransposeableLinearMap{T}
 	end
 end
 
-function Base.*(A :: ImplicitProduct, x :: AbstractVector)
+function Base.:*(A :: ImplicitProduct, x :: AbstractVector)
 	y = x
 	for i=1:length(A.mats)
 		y = A.mats[i] * y
 	end
 	return y
 end
-function Base.*(A... :: Vector{ImplicitProduct})
+function Base.:*(A :: ImplicitProduct ...)
 	get_mats(M) = M.mats
 	return ImplicitProduct(vcat(get_mats.(A)...))
 end
-function Base.*(A :: ImplicitProduct, B... :: Vector{LinearMap})
+function Base.:*(A :: ImplicitProduct, B...)
 	return ImplicitProduct(vcat(A.mats, B))
 end
-function Base.*(A :: LinearMap, B :: ImplicitProduct)
+function Base.:*(A, B :: ImplicitProduct)
 	return ImplicitProduct(vcat([A], B.mats))
 end
 
-function LinearAlgebra.transpose(A :: LinearMap)
+function LinearAlgebra.transpose(A)
 	return ImplicitProduct(transpose.(A.mats))
 end
 
-function Base.eltype(A :: LinearMap{T})
-	return T
+function Base.eltype(A :: ImplicitProduct)
+	if length(A.mats) == 0
+		return Any
+	else
+		return Union{eltype.(A)...}
+	end
 end
 
 """
