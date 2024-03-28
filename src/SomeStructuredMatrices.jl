@@ -16,6 +16,10 @@ using LinearAlgebra
 #AbstractMatrix{T} <: LinearMap{T} where T
 #AbstractQ{T} <: LinearMap{T} where T
 
+function Base.:*()
+	throw(ArgumentError("Don't know how to multiply zero stuff together."))
+end
+
 include("implicit_product.jl")
 
 optimize = optimise
